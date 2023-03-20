@@ -3,6 +3,7 @@ package workshop05code;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 //Included for the logging exercise
@@ -33,7 +34,7 @@ public class App {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         SQLiteConnectionManager wordleDatabaseConnection = new SQLiteConnectionManager("words.db");
 
         wordleDatabaseConnection.createNewDatabase("words.db");
@@ -56,14 +57,19 @@ public class App {
             String line;
             int i = 1;
             while ((line = br.readLine()) != null) {
-                System.out.println(line);
-                wordleDatabaseConnection.addValidWord(i, line);
+                if(!line.matches("[a-z]+") || line.length() != 4){
+                    logger.log(Level.SEVERE,"The word '" + line + "' from data.txt is invalid");
+                } else {
+                    logger.log(Level.INFO,"The word '" + line + "' from data.txt is valid");
+                    wordleDatabaseConnection.addValidWord(i, line);
                 i++;
+                }
             }
 
         } catch (IOException e) {
             System.out.println("Not able to load . Sorry!");
-            System.out.println(e.getMessage());
+            logger.log(Level.WARNING,"The data.txt file is not able to be read");
+            //System.out.println(e.getMessage());
             return;
         }
 
@@ -76,7 +82,10 @@ public class App {
             while (!guess.equals("q")) {
                 System.out.println("You've guessed '" + guess+"'.");
 
-                if (wordleDatabaseConnection.isValidWord(guess)) { 
+                if (!guess.matches("[a-z]+") || guess.length() != 4) { 
+                    logger.log(Level.INFO,"The word '" + guess + "' inputted from user is invalid");
+                    System.out.println("Please input only a 4 letter word, and no special characters or numbers\n");
+                }else if (wordleDatabaseConnection.isValidWord(guess)){
                     System.out.println("Success! It is in the the list.\n");
                 }else{
                     System.out.println("Sorry. This word is NOT in the the list.\n");
@@ -86,7 +95,8 @@ public class App {
                 guess = scanner.nextLine();
             }
         } catch (NoSuchElementException | IllegalStateException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING,"Exception error while trying to get user input");
+            //e.printStackTrace();
         }
 
     }
